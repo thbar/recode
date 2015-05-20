@@ -2,7 +2,11 @@ require 'logger'
 
 module Recode
   def self.logger
-    @logger ||= Logger.new(STDOUT)
+    @logger ||= begin
+      l = Logger.new(STDOUT)
+      l.level = Logger::WARN
+      l
+    end
   end
   
   def self.system!(command)
