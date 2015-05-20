@@ -14,6 +14,7 @@ Gem::Specification.new do |gem|
   gem.version       = Recode::VERSION
   gem.executables   = []
 
+  gem.add_dependency 'nokogiri', '~> 1.6'
   gem.add_development_dependency 'rake', '~> 10.4'
   gem.add_development_dependency 'minitest', '~> 5.6'
   gem.add_development_dependency 'awesome_print', '~> 1.6'
