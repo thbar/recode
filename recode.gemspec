@@ -18,4 +18,6 @@ Gem::Specification.new do |gem|
   gem.add_development_dependency 'rake', '~> 10.4'
   gem.add_development_dependency 'minitest', '~> 5.6'
   gem.add_development_dependency 'awesome_print', '~> 1.6'
+  gem.add_development_dependency 'guard'
+  gem.add_development_dependency 'guard-minitest'
 end
