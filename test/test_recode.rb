@@ -55,5 +55,124 @@ class RecodeTest < Minitest::Test
       assert_equal ["PatternTrack"] * 6 + ["PatternMasterTrack"], doc.search('/RenoiseSong/PatternPool/Patterns/Pattern[1]/Tracks/*').map(&:name)
     end
   end
+  
+  module Recode
+    class NoteColumn
+      attr_accessor :note, :instrument, :volume
+      def initialize(note, instrument:, volume:)
+        @note = note
+        @instrument = instrument
+        @volume = volume
+      end
+    end
+    
+    class PatternTrackLine
+      attr_accessor :notes
+      
+      def initialize
+        @notes = []
+      end
+      
+      def add_note(node, instrument: nil, volume: nil)
+        notes.push(NoteColumn.new(node, instrument: instrument, volume: volume))
+      end
+    end
+    
+    class PatternTrack
+      attr_accessor :lines
+      
+      def initialize
+        @lines = []
+      end
+      
+      def add_line(index)
+        fail "Line already added at index #{index}" if lines[index]
+        lines[index] = Recode::PatternTrackLine.new
+      end
+
+      def [](index)
+        lines[index]
+      end
+      
+      def to_doc
+        builder = Nokogiri::XML::Builder.new do |x|
+          x.PatternTrack(type: 'PatternTrack') do
+            x.SelectedPresetName 'Init'
+            x.SelectedPresetIsModified false
+            x.Lines do
+              lines.each_with_index do |line,index|
+                next unless line
+                x.Line(index: index) do
+                  x.NoteColumns do
+                    line.notes.each do |note|
+                      x.NoteColumn do
+                        x.Note(note.note)
+                        x.Instrument('%02X' % note.instrument) if note.instrument
+                        x.Volume('%02x' % note.volume) if note.volume
+                      end
+                    end
+                  end
+                  x.EffectColumns do
+                    x.EffectColumn # not supported yet
+                  end
+                end
+              end
+            end
+            x.AliasPatternIndex -1
+            x.ColorEnabled false
+            x.Color [0, 0, 0].join(',')
+          end
+        end
+        builder.doc.root
+      end
+    end
+  end
+  
+  def test_pattern_track_generation
+    track = Recode::PatternTrack.new
+
+    track.add_line(2)
+    track[2].add_note('OFF')
+
+    track.add_line(0)
+    # note hexa here!
+    track[0].add_note('C-4', instrument: 0xD, volume: 0x80)
+    
+    expected = <<XML
+<PatternTrack type="PatternTrack">
+  <SelectedPresetName>Init</SelectedPresetName>
+  <SelectedPresetIsModified>false</SelectedPresetIsModified>
+  <Lines>
+    <Line index="0">
+      <NoteColumns>
+        <NoteColumn>
+          <Note>C-4</Note>
+          <Instrument>0D</Instrument>
+          <Volume>80</Volume>
+        </NoteColumn>
+      </NoteColumns>
+      <EffectColumns>
+        <EffectColumn/>
+      </EffectColumns>
+    </Line>
+    <Line index="2">
+      <NoteColumns>
+        <NoteColumn>
+          <Note>OFF</Note>
+        </NoteColumn>
+      </NoteColumns>
+      <EffectColumns>
+        <EffectColumn/>
+      </EffectColumns>
+    </Line>
+  </Lines>
+  <AliasPatternIndex>-1</AliasPatternIndex>
+  <ColorEnabled>false</ColorEnabled>
+  <Color>0,0,0</Color>
+</PatternTrack>
+XML
+
+    assert_equal expected.chomp, track.to_doc.to_xml
+  end
     
 end
