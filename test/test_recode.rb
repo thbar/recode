@@ -102,5 +102,21 @@ XML
 
     assert_equal expected.chomp, track.to_doc.to_xml
   end
+  
+  def test_pattern_master_track_generation
+    track = Recode::PatternTrack.new(type: 'PatternMasterTrack')
+    
+    expected = <<XML
+<PatternMasterTrack type="PatternMasterTrack">
+  <SelectedPresetName>Init</SelectedPresetName>
+  <SelectedPresetIsModified>false</SelectedPresetIsModified>
+  <AliasPatternIndex>-1</AliasPatternIndex>
+  <ColorEnabled>false</ColorEnabled>
+  <Color>0,0,0</Color>
+</PatternMasterTrack>
+XML
+
+    assert_equal expected.chomp, track.to_doc.to_xml
+  end
     
 end

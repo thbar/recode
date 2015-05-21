@@ -53,10 +53,14 @@ module Recode
   end
   
   class PatternTrack
-    attr_accessor :lines
+    attr_accessor :lines, :type
     
-    def initialize
+    ALLOWED_TYPES = %w[PatternTrack PatternMasterTrack]
+    
+    def initialize(type: self.class.name.split('::').last)
       @lines = []
+      fail "Invalid type #{type}" unless ALLOWED_TYPES.include?(type)
+      @type = type
     end
     
     def add_line(index)
@@ -70,24 +74,26 @@ module Recode
     
     def to_doc
       builder = Nokogiri::XML::Builder.new do |x|
-        x.PatternTrack(type: 'PatternTrack') do
+        x.send(type, type: type) do
           x.SelectedPresetName 'Init'
           x.SelectedPresetIsModified false
-          x.Lines do
-            lines.each_with_index do |line,index|
-              next unless line
-              x.Line(index: index) do
-                x.NoteColumns do
-                  line.notes.each do |note|
-                    x.NoteColumn do
-                      x.Note(note.note)
-                      x.Instrument('%02X' % note.instrument) if note.instrument
-                      x.Volume('%02x' % note.volume) if note.volume
+          unless lines.empty?
+            x.Lines do
+              lines.each_with_index do |line,index|
+                next unless line
+                x.Line(index: index) do
+                  x.NoteColumns do
+                    line.notes.each do |note|
+                      x.NoteColumn do
+                        x.Note(note.note)
+                        x.Instrument('%02X' % note.instrument) if note.instrument
+                        x.Volume('%02x' % note.volume) if note.volume
+                      end
                     end
                   end
-                end
-                x.EffectColumns do
-                  x.EffectColumn # not supported yet
+                  x.EffectColumns do
+                    x.EffectColumn # not supported yet
+                  end
                 end
               end
             end
