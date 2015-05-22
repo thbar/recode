@@ -30,7 +30,16 @@ module Recode
       end
     end
   end
-
+  
+  class Song
+    attr_reader :doc
+    
+    def initialize(xrns_unpacked_folder_name)
+      file = File.join(xrns_unpacked_folder_name, 'Song.xml')
+      @doc = Nokogiri::XML(IO.read(file))
+    end
+  end
+  
   class NoteColumn
     attr_accessor :note, :instrument, :volume
     def initialize(note, instrument:, volume:)

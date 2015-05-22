@@ -118,5 +118,12 @@ XML
 
     assert_equal expected.chomp, track.to_doc.to_xml
   end
+  
+  def test_generate_pattern
+    Recode.generate('test/fixtures/generated.xrns', from: template) do |dir|
+      song = Recode::Song.new(dir)
+      assert_equal Nokogiri::XML::Document, song.doc.class
+    end
+  end
     
 end
