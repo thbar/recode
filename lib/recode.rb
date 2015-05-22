@@ -32,20 +32,17 @@ module Recode
   end
   
   class Song
-    attr_reader :doc
+    attr_reader :doc, :pattern_pool
     
-    def initialize(xrns_unpacked_folder_name)
-      file = File.join(xrns_unpacked_folder_name, 'Song.xml')
-      @doc = Nokogiri::XML(IO.read(file))
+    def initialize(folder)
+      @file = File.join(folder, 'Song.xml')
+      @doc = Nokogiri::XML(IO.read(@file))
+      @pattern_pool = PatternPool.new
     end
 
-    def patterns
-      @patterns ||= []
-    end
-    
     def add_pattern
-      patterns.push(instantiate_pattern)
-      patterns.last
+      pattern_pool.patterns.push(instantiate_pattern)
+      pattern_pool.patterns.last
     end
     
     # renoise patterns must have exactly the same number of tracks as the song
@@ -57,6 +54,33 @@ module Recode
       end
       pattern
     end
+    
+    def save
+      element = doc.at('/RenoiseSong/PatternPool')
+      element.replace(pattern_pool.to_doc)
+      IO.write(@file, doc.to_xml)
+    end
+  end
+  
+  class PatternPool
+    def patterns
+      @patterns ||= []
+    end
+    
+    def to_doc
+      builder = Nokogiri::XML::Builder.new do |x|
+        x.PatternPool do
+          x.HighliteStep 0
+          x.DefaultPatternLength 64
+          x.Patterns do
+            patterns.each do |pattern|
+              x.parent << pattern.to_doc
+            end
+          end
+        end
+      end
+      builder.doc.root
+    end
   end
   
   class Pattern
@@ -64,6 +88,20 @@ module Recode
   
     def tracks
       @tracks ||= []
+    end
+    
+    def to_doc
+      builder = Nokogiri::XML::Builder.new do |x|
+        x.Pattern do 
+          x.NumberOfLines length
+          x.Tracks do
+            tracks.each do |track|
+              x.parent << track.to_doc
+            end
+          end
+        end
+      end
+      builder.doc.root
     end
   end
   

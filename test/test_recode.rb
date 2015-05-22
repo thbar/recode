@@ -125,7 +125,7 @@ XML
       assert_equal Nokogiri::XML::Document, song.doc.class
       
       pattern = song.add_pattern
-      assert_equal pattern, song.patterns[0]
+      assert_equal pattern, song.pattern_pool.patterns[0]
       
       # the pattern tracks must instantiate each song track
       assert_equal 6 + 1, pattern.tracks.length
@@ -137,5 +137,50 @@ XML
       assert_equal 64, pattern.length
     end
   end
-    
+  
+  def test_write_single_pattern_song
+    Recode.generate('test/fixtures/hello.xrns', from: template) do |dir|
+      song = Recode::Song.new(dir)
+
+      pattern = song.add_pattern
+      pattern.length = 8
+      
+      line = pattern.tracks[3].add_line(0)
+      line.add_note('C-4', instrument: 0x3)
+
+      line = pattern.tracks[3].add_line(4)
+      line.add_note('C-4', instrument: 0x3)
+
+      line = pattern.tracks[4].add_line(4)
+      line.add_note('C-4', instrument: 0x4)
+
+      song.save
+      
+      # put assertions on generated xml now
+      doc = Nokogiri::XML(IO.read(dir + '/Song.xml'))
+      assert_equal 'RenoiseSong', doc.root.name
+
+      assert_equal 1, doc.search('/RenoiseSong/PatternPool').length
+      assert_equal 1, doc.search('/RenoiseSong/PatternPool/Patterns/Pattern').length
+      assert_equal 6, doc.search('/RenoiseSong/PatternPool/Patterns/Pattern[1]/Tracks/PatternTrack').length
+      
+      output = []
+      doc.search('//PatternTrack').each_with_index do |pattern_track, pattern_track_index|
+        pattern_track.search('Line').each do |line|
+          line_index = line['index']
+          line.search('NoteColumn').each do |note_column|
+            output << {track: pattern_track_index, line: Integer(line_index), values: [note_column.children.map(&:text)]}
+          end
+        end
+      end
+      
+      expected = [
+        {track: 3, line: 0, values: [["C-4", "03"]]},
+        {track: 3, line: 4, values: [["C-4", "03"]]},
+        {track: 4, line: 4, values: [["C-4", "04"]]}
+      ]
+
+      assert_equal expected, output
+    end
+  end
 end
