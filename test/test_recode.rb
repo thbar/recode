@@ -183,4 +183,21 @@ XML
       assert_equal expected, output
     end
   end
+  
+  def test_generate_a_little_song
+    Recode.generate('test/fixtures/hello-song.xrns', from: template) do |dir|
+      song = Recode::Song.new(dir)
+      song.doc.at('ShowSongCommentsAfterLoading').content = "false"
+
+      p = song.add_pattern
+      p.length = 64
+      
+      p.tracks[3].add_line(0)
+
+      [0,3]
+      song.save
+    end
+    
+    # system("open test/fixtures/hello-song.xrns")
+  end
 end
