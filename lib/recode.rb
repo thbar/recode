@@ -38,6 +38,33 @@ module Recode
       file = File.join(xrns_unpacked_folder_name, 'Song.xml')
       @doc = Nokogiri::XML(IO.read(file))
     end
+
+    def patterns
+      @patterns ||= []
+    end
+    
+    def add_pattern
+      patterns.push(instantiate_pattern)
+      patterns.last
+    end
+    
+    # renoise patterns must have exactly the same number of tracks as the song
+    def instantiate_pattern
+      pattern = Pattern.new
+      doc.search('/RenoiseSong/Tracks/*').map(&:name).each do |track|
+        type = track.gsub(/\ASequencer/, 'Pattern')
+        pattern.tracks << PatternTrack.new(type: type)
+      end
+      pattern
+    end
+  end
+  
+  class Pattern
+    attr_accessor :length
+  
+    def tracks
+      @tracks ||= []
+    end
   end
   
   class NoteColumn

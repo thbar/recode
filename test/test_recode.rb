@@ -123,6 +123,18 @@ XML
     Recode.generate('test/fixtures/generated.xrns', from: template) do |dir|
       song = Recode::Song.new(dir)
       assert_equal Nokogiri::XML::Document, song.doc.class
+      
+      pattern = song.add_pattern
+      assert_equal pattern, song.patterns[0]
+      
+      # the pattern tracks must instantiate each song track
+      assert_equal 6 + 1, pattern.tracks.length
+      assert_equal ['PatternTrack'], pattern.tracks[0..5].map(&:type).uniq
+      assert_equal 'PatternMasterTrack', pattern.tracks[6].type
+      
+      # we must be able to specify the length of the pattern
+      pattern.length = 64
+      assert_equal 64, pattern.length
     end
   end
     
