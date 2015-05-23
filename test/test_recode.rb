@@ -200,4 +200,39 @@ XML
     
     # system("open test/fixtures/hello-song.xrns")
   end
+  
+  def test_simple_drum_sequencing
+    pattern = <<DOC
+
+      K...K...K...K...K...K...K...K...K...K...K...K...K...K...K...K..K
+      ....S.......S.......S.......S.......S.......S.......S.......S..S
+      ..H...H...H...H...H...H...H...H...H...H...H...H...H...H...H...H.
+
+DOC
+    mapping = {
+      K: 'C-3',
+      S: 'D-3',
+      H: 'F#3'
+    }
+
+    data = pattern.split("\n").map(&:strip).reject { |x| x.length == 0 }
+
+    Recode.generate('test/fixtures/909.xrns', from: 'test/fixtures/909-template.xrns') do |dir|
+      song = Recode::Song.new(dir)
+      
+      pattern = song.add_pattern
+      pattern.length = data.map(&:length).max
+      
+      data.each_with_index do |track, track_index|
+        track.split(//).each_with_index do |note, index|
+          next if note == '.'
+          note = mapping[note.to_sym]
+          line = pattern.tracks[track_index].new_or_create_line(index)
+          line.add_note(note, instrument: 0x0, volume: 0x80)
+        end
+      end
+
+      song.save
+    end
+  end
 end
