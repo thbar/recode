@@ -55,10 +55,12 @@ module Recode
       pattern
     end
     
-    def save
-      element = doc.at('/RenoiseSong/PatternPool')
-      element.replace(pattern_pool.to_doc)
-      IO.write(@file, doc.to_xml)
+    def save(file = nil)
+      unless file
+        element = doc.at('/RenoiseSong/PatternPool')
+        element.replace(pattern_pool.to_doc)
+      end
+      IO.write(@file || file, doc.to_xml)
     end
   end
   
