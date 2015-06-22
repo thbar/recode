@@ -146,6 +146,10 @@ module Recode
       lines[index]
     end
     
+    def new_or_create_line(index)
+      lines[index] || add_line(index)
+    end
+    
     def to_doc
       builder = Nokogiri::XML::Builder.new do |x|
         x.send(type, type: type) do
