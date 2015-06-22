@@ -129,7 +129,7 @@ module Recode
   class PatternTrack
     attr_accessor :lines, :type
     
-    ALLOWED_TYPES = %w[PatternTrack PatternMasterTrack]
+    ALLOWED_TYPES = %w[PatternTrack PatternMasterTrack PatternSendTrack]
     
     def initialize(type: self.class.name.split('::').last)
       @lines = []
